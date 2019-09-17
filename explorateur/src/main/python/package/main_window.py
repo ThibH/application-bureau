@@ -1,11 +1,15 @@
-from PySide2 import QtWidgets, QtGui, QtCore
 from pprint import pprint
+import os
+from functools import partial
+
+from PySide2 import QtWidgets, QtGui, QtCore
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self):
+    def __init__(self, app_context):
         super().__init__()
 
+        self.app_context = app_context
         self.setWindowTitle("Explorateur de fichiers")
         self.setup_ui()
         self.populate()
@@ -29,13 +33,25 @@ class MainWindow(QtWidgets.QMainWindow):
         self.path = "/"
         self.model = QtWidgets.QFileSystemModel()
         self.model.setRootPath((QtCore.QDir.rootPath()))
+        self.sld_iconSize = QtWidgets.QSlider()
 
     def add_actions_to_toolbar(self):
-        self.toolbar.addAction(QtGui.QIcon("/Users/thibh/Documents/repositories/pipeline/shed_ui/img/home2.png"), "Open In Explorer")
+        self.actions = {}
+        actions = ["home", "desktop", "documents", "movies", "pictures", "music"]
+        standard_path = QtCore.QStandardPaths()
+        for action in actions:
+            path = eval(f"standard_path.standardLocations(QtCore.QStandardPaths.{action.capitalize()}Location)[0]")
+            icon = self.app_context.get_resource(f"{action}.svg")
+            self.actions[action] = self.toolbar.addAction(QtGui.QIcon(icon), action.capitalize())
+            self.actions[action].triggered.connect(partial(self.change_location, path))
 
     def modify_widgets(self):
         self.list_view.setViewMode(QtWidgets.QListView.IconMode)
         self.list_view.setUniformItemSizes(True)
+        self.tree_view.setSortingEnabled(True)
+        self.list_view.setIconSize(QtCore.QSize(48, 48))
+        self.sld_iconSize.setValue(48)
+        self.sld_iconSize.setRange(48, 256)
 
     def create_layouts(self):
         self.main_layout = QtWidgets.QHBoxLayout(self.main_widget)
@@ -45,19 +61,27 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.main_widget)
         self.main_layout.addWidget(self.tree_view)
         self.main_layout.addWidget(self.list_view)
+        self.main_layout.addWidget(self.sld_iconSize)
 
     def setup_connections(self):
         self.tree_view.clicked.connect(self.treeview_clicked)
         self.list_view.doubleClicked.connect(self.list_view_double_clicked)
         self.list_view.clicked.connect(self.list_view_clicked)
         self.list_view.doubleClicked.connect(self.list_view_double_clicked)
+        self.sld_iconSize.valueChanged.connect(self.change_icon_size)
+
+    def change_icon_size(self, value):
+        self.list_view.setIconSize(QtCore.QSize(value, value))
+
+    def change_location(self, path):
+        self.tree_view.setRootIndex(self.model.index(path))
+        self.list_view.setRootIndex(self.model.index(path))
 
     def populate(self):
         self.tree_view.setModel(self.model)
         self.list_view.setModel(self.model)
         self.list_view.setRootIndex(self.model.index(self.path))
         self.tree_view.setRootIndex(self.model.index(self.path))
-        self.tree_view.setSortingEnabled(True)
 
     def treeview_clicked(self, index):
         index_item = self.model.index(index.row(), 0, index.parent())
