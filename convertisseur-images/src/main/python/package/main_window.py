@@ -2,22 +2,27 @@ from PySide2 import QtWidgets, QtGui, QtCore
 
 from package.image import CustomImage
 
-class ConvertImageThread(QtCore.QThread):
-    image_converted = QtCore.Signal(object, bool)
 
+class Worker(QtCore.QObject):
+    image_converted = QtCore.Signal(object, bool)
+    finished = QtCore.Signal()
+    
     def __init__(self, images_to_convert, quality, size, folder):
-        QtCore.QThread.__init__(self)
+        super().__init__()
         self.images_to_convert = images_to_convert
         self.quality = quality
         self.size = size
         self.folder = folder
+        self.runs = True
 
-    def run(self):
+    def convert_images(self):
         for image_lw_item in self.images_to_convert:
-            image = CustomImage(path=image_lw_item.text(), folder=self.folder)
-            success = image.reduce_image(size=self.size, quality=self.quality)
-            self.image_converted.emit(image_lw_item, success)
-      
+            if self.runs and not image_lw_item.processed:
+                image = CustomImage(path=image_lw_item.text(), folder=self.folder)
+                success = image.reduce_image(size=self.size, quality=self.quality)
+                self.image_converted.emit(image_lw_item, success)
+
+        self.finished.emit()
 
 
 class MainWindow(QtWidgets.QWidget):
@@ -82,16 +87,33 @@ class MainWindow(QtWidgets.QWidget):
         folder = self.le_dossierOut.text()
 
         images_lw_items = [self.lw_files.item(i) for i in range(self.lw_files.count())]
+        images_to_process = [1 for lw_item in images_lw_items if not lw_item.processed]
+        if not images_to_process:
+            msg_box = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Aucune image à convertir", "Toutes les images ont déjà été converties!")
+            msg_box.exec_()
+            return False
 
-        self.prg_dialog = QtWidgets.QProgressDialog("Conversion des images", "On annule tout !", 1, len(images_lw_items))
+        self.thread = QtCore.QThread(self)
+        
+        self.obj = Worker(images_to_convert=images_lw_items,
+                          quality=quality,
+                          size=size,
+                          folder=folder)
+
+        self.obj.moveToThread(self.thread)
+        self.obj.image_converted.connect(self.image_converted)
+        self.obj.finished.connect(self.thread.quit)
+        self.thread.started.connect(self.obj.convert_images)
+        self.thread.start()
+        
+        self.prg_dialog = QtWidgets.QProgressDialog("Conversion des images", "Annuler...", 1, len(images_to_process))
         self.prg_dialog.show()
+        self.prg_dialog.canceled.connect(self.abort)
 
-        self.convert_thread = ConvertImageThread(images_to_convert=images_lw_items,
-                                                 quality=quality,
-                                                 size=size,
-                                                 folder=folder)
-        self.convert_thread.start()
-        self.convert_thread.image_converted.connect(self.image_converted)
+    def abort(self):
+        self.obj.runs = False
+        self.thread.quit()
+        self.thread.wait()
 
     def delete_selected_items(self):
         for lw_item in self.lw_files.selectedItems():
@@ -101,6 +123,7 @@ class MainWindow(QtWidgets.QWidget):
     def image_converted(self, lw_item, success):
         if success:
             lw_item.setIcon(self.ctx.img_checked)
+            lw_item.processed = True
             self.prg_dialog.setValue(self.prg_dialog.value() + 1)
 
     def dragEnterEvent(self, event):
@@ -126,4 +149,5 @@ class MainWindow(QtWidgets.QWidget):
         if path not in items:
             lw_item = QtWidgets.QListWidgetItem(path)
             lw_item.setIcon(self.ctx.img_unchecked)
+            lw_item.processed = False
             self.lw_files.addItem(lw_item)
