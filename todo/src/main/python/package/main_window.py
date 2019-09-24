@@ -1,3 +1,5 @@
+import platform
+
 from PySide2 import QtWidgets, QtGui, QtCore
 
 import package.api.task
@@ -34,6 +36,7 @@ class MainWindow(QtWidgets.QWidget):
     def __init__(self, ctx):
         super().__init__()
 
+        self.width = 350
         self.height = 0
         self.ctx = ctx
         self.setup_ui()
@@ -99,7 +102,10 @@ class MainWindow(QtWidgets.QWidget):
 
     def center_under_tray(self):
         tray_x, tray_y, _, _ = self.tray.geometry().getCoords()
-        self.move(tray_x - 100, tray_y + 25)
+        if platform.system() == "Windows":
+            self.move(tray_x - (self.width / 2), min(tray_y - 200, tray_y - self.get_height()))
+        else:
+            self.move(tray_x - (self.width / 2), tray_y + 25)
         
     def get_height(self):
         self.height = (self.lw_tasks.count() + 2) * 50
@@ -121,6 +127,7 @@ class MainWindow(QtWidgets.QWidget):
             package.api.task.add_task(content=text)
             self.populate_tasks()
 
+        self.center_under_tray()
         self.do_animation()
 
     def clean_tasks(self):
@@ -130,6 +137,7 @@ class MainWindow(QtWidgets.QWidget):
                 package.api.task.remove_task(lw_item.text)
 
         self.populate_tasks()
+        self.center_under_tray()
         self.do_animation()
 
     def populate_tasks(self):
@@ -142,6 +150,6 @@ class MainWindow(QtWidgets.QWidget):
         self.anim = QtCore.QPropertyAnimation(self, b"size")
         self.anim.setDuration(250)
         self.anim.setEasingCurve(QtCore.QEasingCurve.InOutBack)
-        self.anim.setStartValue(QtCore.QSize(250, self.height))
-        self.anim.setEndValue(QtCore.QSize(250, self.get_height()))
+        self.anim.setStartValue(QtCore.QSize(self.width, self.height))
+        self.anim.setEndValue(QtCore.QSize(self.width, self.get_height()))
         self.anim.start()
