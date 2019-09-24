@@ -6,6 +6,7 @@ import package.api.task
 
 COLORS = {False: (235, 64, 52), True: (160, 237, 83)}
 
+
 class TaskItem(QtWidgets.QListWidgetItem):
     def __init__(self, text, done, list_widget):
         super().__init__(text)
@@ -36,12 +37,11 @@ class MainWindow(QtWidgets.QWidget):
     def __init__(self, ctx):
         super().__init__()
 
-        self.width = 350
+        self.width = 250
         self.height = 0
         self.ctx = ctx
         self.setup_ui()
         self.populate_tasks()
-        self.tray_icon_click()
 
     def setup_ui(self):
         self.create_widgets()
@@ -100,27 +100,6 @@ class MainWindow(QtWidgets.QWidget):
         self.btn_quit.clicked.connect(self.close)
         self.lw_tasks.itemClicked.connect(lambda task_item: task_item.toggle_state())
 
-    def center_under_tray(self):
-        tray_x, tray_y, _, _ = self.tray.geometry().getCoords()
-        if platform.system() == "Windows":
-            self.move(tray_x - (self.width / 2), min(tray_y - 200, tray_y - self.get_height()))
-        else:
-            self.move(tray_x - (self.width / 2), tray_y + 25)
-        
-    def get_height(self):
-        self.height = (self.lw_tasks.count() + 2) * 50
-        return self.height
-
-    def tray_icon_click(self):
-        self.center_under_tray()
-        self.do_animation()
-
-        if self.isHidden():
-            self.showNormal()
-            self.activateWindow()
-        else:
-            self.hide()
-
     def add_task(self):
         text, ok = QtWidgets.QInputDialog.getText(self, "Ajouter une tâche", "Contenu de la tâche :")
         if ok:
@@ -129,6 +108,13 @@ class MainWindow(QtWidgets.QWidget):
 
         self.center_under_tray()
         self.do_animation()
+
+    def center_under_tray(self):
+        tray_x, tray_y, _, _ = self.tray.geometry().getCoords()
+        if platform.system() == "Windows":
+            self.move(tray_x - (self.width / 2), min(tray_y - 200, tray_y - self.get_height()))
+        else:
+            self.move(tray_x - (self.width / 2), tray_y + 25)
 
     def clean_tasks(self):
         for i in range(self.lw_tasks.count()):
@@ -140,12 +126,6 @@ class MainWindow(QtWidgets.QWidget):
         self.center_under_tray()
         self.do_animation()
 
-    def populate_tasks(self):
-        self.lw_tasks.clear()
-        tasks = package.api.task.get_tasks()
-        for task, done in tasks.items():
-            TaskItem(text=task, done=done, list_widget=self.lw_tasks)
-
     def do_animation(self):
         self.anim = QtCore.QPropertyAnimation(self, b"size")
         self.anim.setDuration(250)
@@ -153,3 +133,23 @@ class MainWindow(QtWidgets.QWidget):
         self.anim.setStartValue(QtCore.QSize(self.width, self.height))
         self.anim.setEndValue(QtCore.QSize(self.width, self.get_height()))
         self.anim.start()
+
+    def get_height(self):
+        self.height = (self.lw_tasks.count() + 2) * 50
+        return self.height
+
+    def populate_tasks(self):
+        self.lw_tasks.clear()
+        tasks = package.api.task.get_tasks()
+        for task, done in tasks.items():
+            TaskItem(text=task, done=done, list_widget=self.lw_tasks)
+
+    def tray_icon_click(self):
+        self.center_under_tray()
+        self.do_animation()
+
+        if self.isHidden():
+            self.showNormal()
+            self.activateWindow()
+        else:
+            self.hide()
