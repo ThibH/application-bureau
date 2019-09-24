@@ -10,6 +10,7 @@ class Notes(list):
         self._retrieve_notes()
 
     def _retrieve_notes(self):
+        """Récupération des notes depuis le disque dur"""
         fichiers = glob(os.path.join(NOTES_DIR, "*.json"))
         for fichier in fichiers:
             with open(fichier, "r") as f:
@@ -22,6 +23,13 @@ class Notes(list):
 
 class Note:
     def __init__(self, title="", content="", uuid=None):
+        """Note individuelle
+        
+        Args:
+            title (str, optional): Le titre de la note. Defaults to "".
+            content (str, optional): Le contenu de la note. Defaults to "".
+            uuid (uuid4, optional): ID unique et aléatoire. Defaults to None.
+        """
         if uuid:
             self.uuid = uuid
             self.title, self.content = self._get_note_data()
@@ -38,16 +46,46 @@ class Note:
 
     @property
     def content(self):
+        """Retourne le contenu de la note
+        
+        Returns:
+            str: Contenu de la note
+        """
         return self._content
 
     @content.setter
     def content(self, value):
+        """Modifie le contenu de la note
+        
+        Args:
+            value (str): Contenu de la note
+        """
         if isinstance(value, str):
             self._content = value
         else:
             print("Svp, entrez du texte.")
 
+    def delete(self):
+        """Supression de la note sur le disque
+        
+        Returns:
+            bool: Retourne vrai si la note a bien été supprimée
+        """
+        os.remove(self.path)
+        if not os.path.exists(self.path):
+            return True
+        return False
+
     def _get_note_data(self):
+        """Récupère le titre et le contenu de la note
+        
+        Raises:
+            FileNotFoundError: Le fichier correspondant à la note n'a pas été trouvé sur le disque
+            AttributeError: Le titre ou le contenu de la note n'a pas été trouvé
+        
+        Returns:
+            str, str: Le titre et le contenu de la note
+        """
         if not os.path.exists(self.path):
             raise FileNotFoundError("Le fichier {self.path} n'existe pas.")
 
@@ -59,18 +97,18 @@ class Note:
 
     @property
     def path(self):
+        """Le chemin sur disque de la note
+        
+        Returns:
+            str: Chemin sur disque de la note
+        """
         return os.path.join(NOTES_DIR, self.uuid + ".json")
         
     def save(self):
+        """Sauvegarde le contenu de la note sur le disque"""
         if not os.path.exists(NOTES_DIR):
             os.makedirs(NOTES_DIR, exist_ok=True)
 
         data = {"title": self.title, "content": self.content}
         with open(self.path, "w") as f:
             json.dump(data, f, indent=4)
-            print("Contenu sauvegardé avec succès.")
-
-if __name__ == "__main__":
-    pass    
-
-

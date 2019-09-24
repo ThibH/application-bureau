@@ -19,7 +19,6 @@ class MainWindow(QtWidgets.QWidget):
         self.setup_connections()
 
     def create_widgets(self):
-        self.le_filter = QtWidgets.QLineEdit()
         self.btn_createNote = QtWidgets.QPushButton("Créer une note")
         self.lw_notes = QtWidgets.QListWidget()
         self.te_contenu = QtWidgets.QTextEdit()
@@ -30,14 +29,11 @@ class MainWindow(QtWidgets.QWidget):
     def create_layouts(self):
         self.main_layout = QtWidgets.QHBoxLayout(self)
         self.left_panel_layout = QtWidgets.QVBoxLayout()
-        self.filter_layout = QtWidgets.QHBoxLayout()
 
     def add_widgets_to_layouts(self):
         self.main_layout.addLayout(self.left_panel_layout)
-        self.left_panel_layout.addLayout(self.filter_layout)
 
-        self.filter_layout.addWidget(self.le_filter)
-        self.filter_layout.addWidget(self.btn_createNote)
+        self.left_panel_layout.addWidget(self.btn_createNote)
         self.left_panel_layout.addWidget(self.lw_notes)
         self.main_layout.addWidget(self.te_contenu)
 
@@ -45,21 +41,32 @@ class MainWindow(QtWidgets.QWidget):
         self.lw_notes.itemSelectionChanged.connect(self.populate_note_content)
         self.btn_createNote.clicked.connect(self.create_note)
         self.te_contenu.textChanged.connect(self.save_note)
+        QtWidgets.QShortcut(QtGui.QKeySequence("Backspace"), self.lw_notes, self.delete_selected_note)
+
 
     # END SETUP
 
     def create_note(self):
         title, result = QtWidgets.QInputDialog.getText(self, "Ajouter une note", "Titre")
-        if result and title != "":
+        if result and title:
             note = Note(title=title)
             note.save()
-            self.populate_note(note=note)
+            self.add_note_to_listwidget(note=note)
+
+    def delete_selected_note(self):
+        selected_items = self.lw_notes.selectedItems()
+        if not selected_items:
+            return False
+
+        selected_item = selected_items[0]
+        selected_item.note.delete()
+        self.lw_notes.takeItem(self.lw_notes.row(selected_item))
 
     def populate_notes(self):
         for note in self.notes:
-            self.populate_note(note=note)
+            self.add_note_to_listwidget(note=note)
 
-    def populate_note(self, note):
+    def add_note_to_listwidget(self, note):
         lw_item = QtWidgets.QListWidgetItem(note.title)
         lw_item.note = note
         self.lw_notes.addItem(lw_item)
