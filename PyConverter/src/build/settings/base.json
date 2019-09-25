@@ -1,5 +1,5 @@
 {
-    "app_name": "convertisseur-images",
+    "app_name": "PyConverter",
     "author": "Thibh",
     "main_module": "src/main/python/main.py",
     "version": "0.0.0"

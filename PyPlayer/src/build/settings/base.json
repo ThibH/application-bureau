@@ -1,5 +1,5 @@
 {
-    "app_name": "lecteur-multimedia",
+    "app_name": "PyPlayer",
     "author": "Thibh",
     "main_module": "src/main/python/main.py",
     "version": "0.0.0"

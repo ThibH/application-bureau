@@ -52,6 +52,13 @@ class MainWindow(QtWidgets.QWidget):
         self.lbl_dropInfo = QtWidgets.QLabel("^ Déposez les images sur l'interface")
 
     def modify_widgets(self):
+        css_file = self.ctx.get_resource("style.css")
+        with open(css_file, "r") as f:
+            self.setStyleSheet(f.read())
+
+        self.spn_quality.setAlignment(QtCore.Qt.AlignRight)
+        self.spn_size.setAlignment(QtCore.Qt.AlignRight)
+        self.le_dossierOut.setAlignment(QtCore.Qt.AlignRight)
         self.spn_quality.setRange(1, 100)
         self.spn_quality.setValue(75)
         self.spn_size.setRange(1, 100)

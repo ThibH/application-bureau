@@ -3,9 +3,10 @@ from package.api.note import Notes, Note
 
 
 class MainWindow(QtWidgets.QWidget):
-    def __init__(self):
+    def __init__(self, ctx):
         super().__init__()
 
+        self.ctx = ctx
         self.setWindowTitle("Prise de notes")
         self.setup_ui()
         self.notes = Notes()
@@ -24,7 +25,9 @@ class MainWindow(QtWidgets.QWidget):
         self.te_contenu = QtWidgets.QTextEdit()
 
     def modify_widgets(self):
-        pass
+        css_file = self.ctx.get_resource("style.css")
+        with open(css_file, "r") as f:
+            self.setStyleSheet(f.read())
 
     def create_layouts(self):
         self.main_layout = QtWidgets.QHBoxLayout(self)
@@ -42,9 +45,6 @@ class MainWindow(QtWidgets.QWidget):
         self.btn_createNote.clicked.connect(self.create_note)
         self.te_contenu.textChanged.connect(self.save_note)
         QtWidgets.QShortcut(QtGui.QKeySequence("Backspace"), self.lw_notes, self.delete_selected_note)
-
-
-    # END SETUP
 
     def create_note(self):
         title, result = QtWidgets.QInputDialog.getText(self, "Ajouter une note", "Titre")

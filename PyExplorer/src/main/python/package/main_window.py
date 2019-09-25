@@ -6,10 +6,10 @@ from PySide2 import QtWidgets, QtGui, QtCore
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self, app_context):
+    def __init__(self, ctx):
         super().__init__()
 
-        self.app_context = app_context
+        self.ctx = ctx
         self.setWindowTitle("Explorateur de fichiers")
         self.setup_ui()
         self.populate()
@@ -41,11 +41,14 @@ class MainWindow(QtWidgets.QMainWindow):
         standard_path = QtCore.QStandardPaths()
         for action in actions:
             path = eval(f"standard_path.standardLocations(QtCore.QStandardPaths.{action.capitalize()}Location)[0]")
-            icon = self.app_context.get_resource(f"{action}.svg")
+            icon = self.ctx.get_resource(f"{action}.svg")
             self.actions[action] = self.toolbar.addAction(QtGui.QIcon(icon), action.capitalize())
             self.actions[action].triggered.connect(partial(self.change_location, path))
 
     def modify_widgets(self):
+        css_file = self.ctx.get_resource("style.css")
+        with open(css_file, "r") as f:
+            self.setStyleSheet(f.read())
         self.list_view.setViewMode(QtWidgets.QListView.IconMode)
         self.list_view.setUniformItemSizes(True)
         self.tree_view.setSortingEnabled(True)

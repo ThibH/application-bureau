@@ -4,7 +4,6 @@ from PySide2 import QtWidgets, QtCore, QtMultimedia, QtMultimediaWidgets
 
 
 class MainWindow(QtWidgets.QMainWindow):
-
     def __init__(self):
         super(MainWindow, self).__init__()
 
@@ -34,7 +33,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.act_previous = self.toolbar.addAction(self.previous_icon, "Previous")
         self.act_pause = self.toolbar.addAction(self.pause_icon, "Pause")
         self.act_stop = self.toolbar.addAction(self.stop_icon, "Stop")
-
+    
     def add_widgets_to_layouts(self):
         self.addToolBar(self.toolbar)
         self.setCentralWidget(self.video_widget)
