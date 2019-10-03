@@ -30,15 +30,12 @@ class MainWindow(QtWidgets.QWidget):
             self.setStyleSheet(f.read())
 
     def create_layouts(self):
-        self.main_layout = QtWidgets.QHBoxLayout(self)
-        self.left_panel_layout = QtWidgets.QVBoxLayout()
+        self.main_layout = QtWidgets.QGridLayout(self)
 
     def add_widgets_to_layouts(self):
-        self.main_layout.addLayout(self.left_panel_layout)
-
-        self.left_panel_layout.addWidget(self.btn_createNote)
-        self.left_panel_layout.addWidget(self.lw_notes)
-        self.main_layout.addWidget(self.te_contenu)
+        self.main_layout.addWidget(self.btn_createNote, 0, 0, 1, 1)
+        self.main_layout.addWidget(self.lw_notes, 1, 0, 1, 1)
+        self.main_layout.addWidget(self.te_contenu, 0, 1, 2, 1)
 
     def setup_connections(self):
         self.lw_notes.itemSelectionChanged.connect(self.populate_note_content)
